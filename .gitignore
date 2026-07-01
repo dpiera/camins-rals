@@ -16,6 +16,7 @@ dist/
 # Export outputs
 *.png
 !logo_temporal.png
+!docs/*.png
 
 # Python env
 .conda/
