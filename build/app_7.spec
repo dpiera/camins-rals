@@ -11,10 +11,10 @@ import os, sys
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 # ── Playwright Chromium ───────────────────────────────────────────────────────
-# The GitHub Actions workflow copies %LOCALAPPDATA%\ms-playwright here so that
-# we can bundle Chromium without it needing to be in any fixed system location.
-_here = os.path.dirname(os.path.abspath(SPEC))  # repo root
-_pw_src = os.path.join(_here, 'ms-playwright')
+# SPEC is inside build/, so go one level up to reach the repo root.
+_spec_dir  = os.path.dirname(os.path.abspath(SPEC))   # .../build/
+_repo_root = os.path.dirname(_spec_dir)                # .../camins-rals/
+_pw_src    = os.path.join(_repo_root, 'ms-playwright')
 playwright_datas = [(_pw_src, 'ms-playwright')] if os.path.isdir(_pw_src) else []
 if not playwright_datas:
     print("WARNING: ms-playwright/ not found — export will fail on machines "
@@ -22,8 +22,8 @@ if not playwright_datas:
 
 # ── Analysis ──────────────────────────────────────────────────────────────────
 a = Analysis(
-    [os.path.join(_here, 'app_7.py')],
-    pathex=[_here],
+    [os.path.join(_repo_root, 'app_7.py')],
+    pathex=[_repo_root],
     binaries=[],
     datas=playwright_datas + collect_data_files('matplotlib'),
     hiddenimports=[
