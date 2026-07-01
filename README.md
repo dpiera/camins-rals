@@ -32,7 +32,8 @@ Built as a tool for the book *Camins Rals de Catalunya* — a guide to the ancie
 
 ## Screenshots
 
-> *Afegeix captures de pantalla aquí*
+![Uploading image.png…]()
+
 
 ---
 
