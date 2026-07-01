@@ -1,0 +1,29 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# PyInstaller build outputs
+build/ms-playwright/
+ms-playwright/
+dist/
+*.spec.log
+
+# Temporary map files
+*.html
+!build/*.html
+
+# Export outputs
+*.png
+!logo_temporal.png
+
+# Python env
+.conda/
+*.egg-info/
+.env
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~

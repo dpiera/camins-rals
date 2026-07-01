@@ -1,0 +1,89 @@
+name: Build Windows App
+
+# Triggers:
+#   • Push a tag like "v7.0" → automatic release build
+#   • GitHub UI → Actions → "Build Windows App" → Run workflow
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      # ── 1. Get the code ──────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Python 3.11 ───────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── 3. Install Python dependencies ───────────────────────────────────────
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r build/requirements_windows.txt
+
+      # ── 4. Download Playwright Chromium ──────────────────────────────────────
+      - name: Install Playwright Chromium browser
+        run: playwright install chromium
+
+      # ── 5. Copy Chromium into the repo so PyInstaller can bundle it ──────────
+      #   Playwright stores browsers in %LOCALAPPDATA%\ms-playwright
+      #   We copy that folder to the repo root so the spec file finds it.
+      - name: Stage Chromium for bundling
+        shell: pwsh
+        run: |
+          $src = "$env:LOCALAPPDATA\ms-playwright"
+          $dst = "ms-playwright"
+          Write-Host "Copying Chromium from $src ..."
+          Copy-Item -Path $src -Destination $dst -Recurse -Force
+          $size = (Get-ChildItem $dst -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host ("Chromium staged: {0:N0} MB" -f $size)
+
+      # ── 6. Build with PyInstaller ─────────────────────────────────────────────
+      - name: Build executable
+        run: pyinstaller build/app_7.spec
+
+      # ── 7. Zip the output ────────────────────────────────────────────────────
+      - name: Create release zip
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "dist\CaminsRals\*" `
+            -DestinationPath "CaminsRals-Windows.zip"
+          $size = (Get-Item CaminsRals-Windows.zip).Length / 1MB
+          Write-Host ("Archive size: {0:N0} MB" -f $size)
+
+      # ── 8. Upload artifact (always available for 30 days) ────────────────────
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CaminsRals-Windows
+          path: CaminsRals-Windows.zip
+          retention-days: 30
+
+      # ── 9. Create GitHub Release (only on version tags) ──────────────────────
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: CaminsRals-Windows.zip
+          name: "Camins Rals ${{ github.ref_name }}"
+          body: |
+            ## Camins Rals — Aplicació de Mapes GPX
+
+            ### Instal·lació
+            1. Descarrega **CaminsRals-Windows.zip**
+            2. Descomprimeix en qualsevol carpeta (ex: `C:\Camins Rals\`)
+            3. Fes doble clic a **CaminsRals.exe**
+
+            No requereix instal·lació ni connexió a internet.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
