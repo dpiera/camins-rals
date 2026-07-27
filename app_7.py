@@ -224,7 +224,7 @@ html,body{{margin:0;padding:0;height:100%;}}
 <div id="map"></div>
 <script>
 // ---- MAP INIT ----
-var map = L.map('map', {{zoomControl:true, preferCanvas:true}});
+var map = L.map('map', {{zoomControl:true}});
 L.tileLayer('{ICGC_TILE}', {{attribution:'{ICGC_ATTR}', maxZoom:20}}).addTo(map);
 
 // ---- TRACKS ----
@@ -347,8 +347,8 @@ html,body{{margin:0;padding:0;height:100%;width:100%;}}
 .wlbl.leaflet-tooltip::before{{display:none !important;}}
 </style></head><body><div id="map"></div>
 <script>
-var map = L.map('map', {{zoomControl:false, attributionControl:false,
-                         preferCanvas:true}});
+var map = L.map('map', {{zoomControl:false, attributionControl:false}});
+
 L.tileLayer('{ICGC_TILE}', {{maxZoom:20}}).addTo(map);
 {init_js}
 
@@ -654,7 +654,7 @@ class ExportWorker(QThread):
 
             self.status.emit("Obrint navegador en segon pla…")
             with sync_playwright() as p:
-                browser = p.chromium.launch()
+                browser = p.chromium.launch(args=["--disable-gpu", "--disable-dev-shm-usage", "--disable-software-rasterizer"])
                 ctx = browser.new_context(
                     viewport={"width": self.width, "height": self.height},
                     device_scale_factor=self.scale
@@ -662,7 +662,7 @@ class ExportWorker(QThread):
                 page = ctx.new_page()
                 page.goto(f"file://{tmp.name}")
                 self.status.emit("Esperant que carreguin les tessel·les (10 s)…")
-                page.wait_for_timeout(10000)
+                page.wait_for_timeout(60000)
                 page.screenshot(path=self.path)
                 browser.close()
 
